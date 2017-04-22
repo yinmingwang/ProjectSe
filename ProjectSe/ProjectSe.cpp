@@ -11,6 +11,34 @@
 using namespace std;
 using namespace cv;
 int r = 1;
+Mat paint(Mat srcimg) {
+	int width = srcimg.cols;
+	int height = srcimg.rows;
+	if (width > height) {
+		Mat img(width, width, srcimg.type(), Scalar(0, 0, 0));
+		int diff = width - height;
+		int d = diff / 2;
+		for (int i = d; i < width - d - (diff % 2); i++) {
+			for (int j = 0; j < width; j++) {
+				img.at<uchar>(i, j) = srcimg.at<uchar>(i - d, j);
+			}
+		}
+		return img;
+	}
+	else if (width < height) {
+		Mat img(height, height, srcimg.type(), Scalar(0, 0, 0));
+		int diff = height - width;
+		int d = diff / 2;
+		for (int i = 0; i < height; i++) {
+			for (int j = d; j < height - d - (diff % 2); j++) {
+				img.at<uchar>(i, j) = srcimg.at<uchar>(i, j - d);
+			}
+		}
+		return img;
+	}
+	return srcimg;
+
+}
 vector<Mat> horizontalProjectionMat(Mat srcImg)//水平投影  
 {
 	Mat binImg = srcImg;
@@ -64,6 +92,9 @@ vector<Mat> horizontalProjectionMat(Mat srcImg)//水平投影
 			endIndex = i;
 			inBlock = false;
 			Mat roiImg = srcImg(Range(startIndex, endIndex + 1), Range(0, srcImg.cols));//从原图中截取有图像的区域
+			//Mat timg = paint(roiImg);
+			//Mat img;
+			//resize(timg, img, Size(32, 32), 0, 0, CV_INTER_LINEAR);
 			roiList.push_back(roiImg);
 		}
 	}
@@ -162,16 +193,27 @@ int main()
 		Mat binimage;
 		cv::cvtColor(srcimage, grayimg, CV_BGR2GRAY);
 		adaptiveThreshold(grayimg, binimage, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 17, 33);
-		Mat Mimage = Erosion(binimage, 2);
-		Mimage = Dilation(Mimage, 2);
-		vector<Mat> b = verticalProjectionMat(Mimage);//先进行垂直投影     
+		Mat Mmimage = Erosion(binimage, 2);
+		//Mat Dimage = Dilation(Mmimage, 2);
+		Mat Mimage = Dilation(Mmimage, 2);
+		vector<Mat> b = verticalProjectionMat(Mimage);//先进行垂直投影
 		for (int i = 0; i < b.size(); i++)
 		{
+			stringstream streami;
+			string  stri;
+			streami << i;
+			streami >> stri;
 			vector<Mat> a = horizontalProjectionMat(b[i]);//水平投影  
-			//sprintf(szName, "E:\\picture\\%d.jpg", i);
 			for (int j = 0; j < a.size(); j++)
 			{
-				imshow("1", a[j]);
+				stringstream streamj;
+				string  strj;
+				streamj << j;
+				streamj >> strj;
+				string name = str + "_"+ stri + "_" + strj + ".jpg";
+				//string path = "C:\\Users\\yinmw\\Desktop\\picbinaryseg\\" + name;
+				//imwrite(path, a[j]);
+				imshow(name, a[j]);
 			}
 		}
 		cvWaitKey(0);
